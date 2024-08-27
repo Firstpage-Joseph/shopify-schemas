@@ -1,0 +1,71 @@
+{% assign collection_title = collection.title | escape %}
+{% assign collection_description = collection.description | escape %}
+{% assign collection_url = collection.url | prepend: shop.url %}
+{% assign collection_image = collection.image | img_url: 'master' | prepend: shop.url %}
+{% assign collection_products = collection.products %}
+{% assign shop_name = shop.name | escape %}
+{% assign shop_url = shop.url %}
+{% assign breadcrumbs = "" %}
+{% if current_tags.size > 0 %}
+  {% assign breadcrumbs = current_tags %}
+{% endif %}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "{{ collection_title }}",
+  "description": "{{ collection_description }}",
+  "url": "{{ collection_url }}",
+  "image": "{{ collection_image }}",
+  "mainEntity": {
+    "@type": "ItemList",
+    "itemListElement": [
+      {% for product in collection_products %}
+      {
+        "@type": "ListItem",
+        "position": {{ forloop.index }},
+        "url": "{{ product.url | prepend: shop.url }}",
+        "name": "{{ product.title | escape }}",
+        "image": "{{ product.featured_image | img_url: 'master' | prepend: shop.url }}",
+        "priceCurrency": "{{ shop.currency | escape }}",
+        "price": "{{ product.price | divided_by: 100 }}"
+      }{% if forloop.last == false %},{% endif %}
+      {% endfor %}
+    ]
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "{{ shop_name }}",
+        "item": "{{ shop_url }}"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Collections",
+        "item": "{{ shop_url }}/collections"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "{{ collection_title }}",
+        "item": "{{ collection_url }}"
+      }
+      {% if breadcrumbs != "" %}
+        {% for tag in breadcrumbs %}
+          ,{
+            "@type": "ListItem",
+            "position": {{ 4 | plus: forloop.index }},
+            "name": "{{ tag | escape }}",
+            "item": "{{ collection_url }}/{{ tag | handle }}"
+          }
+        {% endfor %}
+      {% endif %}
+    ]
+  }
+}
+</script>
