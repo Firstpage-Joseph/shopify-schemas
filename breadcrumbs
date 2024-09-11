@@ -1,0 +1,138 @@
+{% unless template == 'index' or template == 'cart' or template == 'list-collections' %}
+ <div class="page-width" style="margin-top:30px;">
+<nav class="breadcrumb" role="navigation" aria-label="breadcrumbs">
+  <a href="/" title="Home">Home</a>
+  {% if template contains 'page' %}
+    <span aria-hidden="true">&rsaquo;</span>
+    <span>{{ page.title }}</span>
+  {% elsif template contains 'product' %}
+    {% if collection.url %}
+      <span aria-hidden="true">&rsaquo;</span>
+      {{ collection.title | link_to: collection.url }}
+    {% endif %}
+    {% if product.collections[0].title %}
+      <span aria-hidden="true">&rsaquo;</span>
+      {{ product.collections[0].title | link_to: product.collections[0].url  }}
+    {% endif %}
+    <span aria-hidden="true">&rsaquo;</span>
+    <span>{{ product.title }}</span>
+  {% elsif template contains 'collection' and collection.handle %}
+    <span aria-hidden="true">&rsaquo;</span>
+    {% if current_tags %}
+      {% capture url %}/collections/{{ collection.handle }}{% endcapture %}
+      {{ collection.title | link_to: url }}
+      <span aria-hidden="true">&rsaquo;</span>
+      <span>{{ current_tags | join: " + " }}</span>
+    {% else %}
+      <span>{{ collection.title }}</span>
+    {% endif %}
+  {% elsif template == 'blog' %}
+    <span aria-hidden="true">&rsaquo;</span>
+    {% if current_tags %}
+      {{ blog.title | link_to: blog.url }}
+      <span aria-hidden="true">&rsaquo;</span>
+      <span>{{ current_tags | join: " + " }}</span>
+    {% else %}
+    <span>{{ blog.title }}</span>
+    {% endif %}
+  {% elsif template == 'article' %}
+    <span aria-hidden="true">&rsaquo;</span>
+    {{ blog.title | link_to: blog.url }}
+    <span aria-hidden="true">&rsaquo;</span>
+    <span>{{ article.title }}</span>
+  {% else %}
+   <span aria-hidden="true">&rsaquo;</span>
+   <span>{{ page_title }}</span>
+  {% endif %}
+</nav></div>
+{% endunless %}
+
+{% unless template == 'index' or template == 'cart' or template == 'list-collections' %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "{{ shop.url }}"
+    }
+    {% if template contains 'page' %}
+    ,{
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ page.title }}",
+      "item": "{{ canonical_url }}"
+    }
+    {% elsif template contains 'product' %}
+    {% if collection %}
+    ,{
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ collection.title }}",
+      "item": "{{ collection.url }}"
+    }
+    {% endif %}
+    ,{
+      "@type": "ListItem",
+      "position": 3,
+      "name": "{{ product.title }}",
+      "item": "{{ product.url }}"
+    }
+    {% elsif template contains 'collection' and collection.handle %}
+    ,{
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ collection.title }}",
+      "item": "{{ collection.url }}"
+    }
+    {% if current_tags %}
+    ,{
+      "@type": "ListItem",
+      "position": 3,
+      "name": "{{ current_tags | join: ' + ' }}",
+      "item": "{{ canonical_url }}"
+    }
+    {% endif %}
+    {% elsif template == 'blog' %}
+    ,{
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ blog.title }}",
+      "item": "{{ blog.url }}"
+    }
+    {% if current_tags %}
+    ,{
+      "@type": "ListItem",
+      "position": 3,
+      "name": "{{ current_tags | join: ' + ' }}",
+      "item": "{{ canonical_url }}"
+    }
+    {% endif %}
+    {% elsif template == 'article' %}
+    ,{
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ blog.title }}",
+      "item": "{{ blog.url }}"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "{{ article.title }}",
+      "item": "{{ article.url }}"
+    }
+    {% else %}
+    ,{
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ page_title }}",
+      "item": "{{ canonical_url }}"
+    }
+    {% endif %}
+  ]
+}
+</script>
+{% endunless %}
