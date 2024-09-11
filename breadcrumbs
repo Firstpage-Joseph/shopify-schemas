@@ -46,7 +46,6 @@
   {% endif %}
 </nav></div>
 {% endunless %}
-
 {% unless template == 'index' or template == 'cart' or template == 'list-collections' %}
 <script type="application/ld+json">
 {
@@ -67,26 +66,34 @@
       "item": "{{ canonical_url }}"
     }
     {% elsif template contains 'product' %}
-    {% if collection %}
+    {% if collection.url %}
     ,{
       "@type": "ListItem",
       "position": 2,
       "name": "{{ collection.title }}",
-      "item": "{{ collection.url }}"
+      "item": "https://cakebar.com.sg{{ collection.url }}"
+    }
+    {% endif %}
+    {% if product.collections.size > 0 %}
+    ,{
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ product.collections[0].title }}",
+      "item": "https://cakebar.com.sg{{ product.collections[0].url }}"
     }
     {% endif %}
     ,{
       "@type": "ListItem",
-      "position": 3,
+      "position": {% if collection.url or product.collections.size > 0 %}3{% else %}3{% endif %},
       "name": "{{ product.title }}",
-      "item": "{{ product.url }}"
+      "item": "https://cakebar.com.sg{{ product.url }}"
     }
     {% elsif template contains 'collection' and collection.handle %}
     ,{
       "@type": "ListItem",
       "position": 2,
       "name": "{{ collection.title }}",
-      "item": "{{ collection.url }}"
+      "item": "https://cakebar.com.sg/collections/{{ collection.handle }}"
     }
     {% if current_tags %}
     ,{
