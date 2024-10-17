@@ -1,0 +1,107 @@
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var productId = "{{ product.id }}";  // Product ID from Shopify
+    var apiKey = "pubkey-gBy8eMs72zOm1UlQ4R5713e62I9bis";  // Stamped API key
+    var storeUrl = "jacob-rachel.myshopify.com";  // Store URL from Shopify
+
+    // Fetch the Stamped widget data
+    fetch(`https://stamped.io/api/widget?productId=${productId}&apiKey=${apiKey}&storeUrl=${storeUrl}`)
+      .then(response => response.json())
+      .then(data => {
+        if (!data.widget) {
+          console.error('Stamped widget data not found');
+          return;
+        }
+
+        // Parse the HTML response and extract the reviews
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(data.widget, 'text/html');
+        var docproduct = parser.parseFromString(data.product, 'text/html');
+
+        
+        // Extract review count from the "reviews" tab element
+        var reviewCountElement = doc.querySelector('li[data-type="reviews"]');
+        var reviewCount = reviewCountElement ? reviewCountElement.getAttribute('data-count') : 0;
+        // Extract rating value from the star ratings element
+        var ratingElement = docproduct.querySelector('.stamped-summary-text-1');
+        var ratingValue = ratingElement ? ratingElement.innerText : 0;
+
+        console.log(reviewCountElement, ratingElement, 'elementssssss');
+        
+        // Extract review elements
+        var reviewElements = doc.querySelectorAll('.stamped-review');
+
+        // Array to store review details
+        var reviews = [];
+
+        reviewElements.forEach(function(reviewElement) {
+          // Extract author
+          var authorElement = reviewElement.querySelector('.author');
+          var author = authorElement ? authorElement.innerText.trim() : 'Unknown';
+
+          // Extract review date
+          var dateElement = reviewElement.querySelector('.created');
+          var date = dateElement ? dateElement.innerText.trim() : 'No date available';
+
+          // Extract review comment/body
+          var bodyElement = reviewElement.querySelector('.stamped-review-content-body');
+          var body = bodyElement ? bodyElement.innerText.trim() : 'No review text';
+
+          // Extract review rating
+          var ratingElement = reviewElement.querySelector('.stamped-review-header-starratings');
+          var rating = ratingElement ? ratingElement.getAttribute('data-rating') : 'No rating';
+
+          // Add the review details to the reviews array
+          reviews.push({
+            "@type": "Review",
+            "author": {
+              "@type": "Person",
+              "name": author
+            },
+            "datePublished": date,
+            "reviewBody": body,
+            "reviewRating": {
+              "@type": "Rating",
+              "ratingValue": rating,
+              "bestRating": "5",
+              "worstRating": "1"
+            }
+          });
+        });
+
+        // Check if the product-schema element exists
+        var schemaElement = document.getElementById('product-schema');
+        if (!schemaElement) {
+          console.error('product-schema element not found');
+          return;
+        }
+
+        // Parse the existing schema
+        var schema = JSON.parse(schemaElement.innerHTML);
+
+        if (ratingValue && reviewCount) {
+          // Ensure aggregateRating object is added
+          schema.aggregateRating = {
+            "@type": "AggregateRating",
+            "ratingValue": ratingValue,
+            "reviewCount": reviewCount
+          };
+        } else {
+          console.error('Error extracting aggregate rating data');
+          return;
+        }
+
+        // Add reviews to the schema only if aggregateRating is present
+        if (reviews.length > 0 && schema.aggregateRating) {
+          schema.review = reviews;
+        } else {
+          console.error('No reviews found or missing aggregateRating');
+        }
+
+        // Update the JSON-LD schema on the page
+        schemaElement.innerHTML = JSON.stringify(schema);
+      })
+      .catch(error => console.error('Error fetching Stamped reviews:', error));
+  });
+</script>
