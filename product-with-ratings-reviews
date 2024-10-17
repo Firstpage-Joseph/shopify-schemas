@@ -1,0 +1,87 @@
+<script type="application/ld+json" id="product-json-ld">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.title }}",
+  "image": "{{ product.featured_image | img_url: '600x600' }}",
+  "description": "{{ product.description | strip_newlines | escape }}",
+  "mpn": "{{ product.id }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "{{ product.vendor }}"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "PLACEHOLDER_RATING",
+    "reviewCount": "PLACEHOLDER_REVIEW_COUNT"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ shop.url }}{{ product.url }}",
+    "priceCurrency": "{{ shop.currency }}",
+    "price": "{{ product.price | money_without_currency }}",
+    "priceValidUntil": "{{ 'now' | date: '%Y-%m-%d' | date_add_days: 60 }}", 
+    "itemCondition": "https://schema.org/NewCondition",
+    "availability": "https://schema.org/{% if product.available %}InStock{% else %}OutOfStock{% endif %}",
+    "sku": "{{ product.sku }}",
+    "mpn": "{{ product.id }}"
+  }
+}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var productReviews = {{ product.metafields.judgeme | json }};
+  var reviews = [];
+  var hasReviews = false;
+
+  // Assuming review data is structured and accessible
+  var reviewElements = document.querySelectorAll('.jdgm-rev');
+  if (reviewElements.length > 0) {
+    hasReviews = true;
+    reviewElements.forEach(function(reviewElement) {
+      var rating = reviewElement.querySelectorAll('.jdgm-star.jdgm--on').length;
+      var author = reviewElement.querySelector('.jdgm-rev__author').textContent.trim();
+      var reviewBody = reviewElement.querySelector('.jdgm-rev__body').textContent.trim();
+
+      reviews.push({
+        "@type": "Review",
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": rating,
+          "bestRating": "5"
+        },
+        "author": {
+          "@type": "Person",
+          "name": author
+        },
+        "reviewBody": reviewBody
+      });
+    });
+  }
+
+  // Fetch the existing JSON-LD script and append the reviews
+  var jsonLdScript = document.getElementById('product-json-ld');
+  if (jsonLdScript) {
+    var jsonLdData = JSON.parse(jsonLdScript.textContent);
+    
+    if (hasReviews) {
+      // Replace placeholders with actual values
+      var ratingValue = document.querySelector('.jdgm-prev-badge').getAttribute('data-average-rating');
+      var reviewCount = document.querySelector('.jdgm-prev-badge').getAttribute('data-number-of-reviews');
+      jsonLdData.aggregateRating.ratingValue = ratingValue;
+      jsonLdData.aggregateRating.reviewCount = reviewCount;
+      
+      // Append reviews to JSON-LD
+      jsonLdData.review = reviews;
+    } else {
+      // No reviews, set default values
+      jsonLdData.aggregateRating.ratingValue = "5";
+      jsonLdData.aggregateRating.reviewCount = "1";
+       jsonLdData.review = [];
+    }
+
+    // Update the JSON-LD script content
+    jsonLdScript.textContent = JSON.stringify(jsonLdData, null, 2);
+  }
+});
+</script>
